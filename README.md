@@ -14,6 +14,7 @@ This code currently includes all of the functions that are necessary for the rob
 This program was originally created by Alex McMinn and a friend for the LEGO Mindstorms EV3 robot for the First Lego League robotics program and competition. It has been customized to match the functions needed for this robot to work
 
 Copyright 2019-2020 Alex McMinn and Parker Pulfer
+
 Copyright 2023 Alex McMinn
 
 # Disclaimer
