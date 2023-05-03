@@ -5,6 +5,8 @@ will never be confused about which direction it is going. This also includes spe
 
 Each function also returns the result, which allows for advanced debugging and program integration.
 
+This program was originally written by Alex McMinn and Parker Pulfer for the LEGO Mindstorms EV3 robot, and has been adjusted to be more useful for the room cleaning robot
+
 Copyright 2020 Alex McMinn and Parker Pulfer
 Copyright 2023 Alex McMinn
 """
@@ -14,12 +16,10 @@ Copyright 2023 Alex McMinn
 ##############
 
 from time import sleep
-#from pybricks import *
 
 ##############
 # Initialize the robot's motors and functions.
 ##############
-
 def drive_base_init(): # This function initializes the robot and makes sure that it works properly
     left_motor = Motor(Port.B, Direction.CLOCKWISE)
     right_motor = Motor(Port.C, Direction.CLOCKWISE)
@@ -39,13 +39,14 @@ def calc_right_distance(want, current):
         # print('  calc_right_distance ring ' + str(ring) + ' want ' + str(want))
     return distance
 
+
 ###############
-# Given a position on the compass, return new position on compass after traveling a distance
+# These functions travel a distance on a given bearing and then return the new bearing if it has deviated from the original
+# Given a position on the compass, return new position on compass after traveling a distance. This helps to correct for any deviation while driving.
 # current- the current position on the compass
 # distance- how many degrees to move on the compass
 # return- this returns the new compass position
 ###############
-
 def travel_left_distance(current, distance):
     traveled = 0
     gyro_value = current
@@ -55,19 +56,6 @@ def travel_left_distance(current, distance):
         print('  travel_left_distance ring_value ' + str(ring_value) + ' traveled ' + str(traveled))
     return gyro_value
 
-# Determine the # of degrees between the current and wanted position
-# want- the new compass position
-# current- the current position on the compass
-def calc_left_distance(want, current):
-    distance = 0
-    ring = current
-    while ring < want:
-        if ring == 0:
-            ring = 360
-        distance = distance + 1
-        ring = ring - 1
-        # print('  calc_left_distance ring ' + str(ring) + ' want ' + str(want))
-    return distance
 def travel_right_distance(current, distance):
     traveled = 0
     ring_value = current
@@ -77,8 +65,28 @@ def travel_right_distance(current, distance):
         # print('  travel_right_distance ring_value ' + str(ring_value) + ' traveled ' + str(traveled))
     return ring_value
 
+
+###############
+# Calculate the turning distace using a ring (tank drive) method.
+# Determine the # of degrees between the current and wanted position
+# want- the new compass position
+# current- the current position on the compass
+###############
+def calc_left_distance(want, current):
+    distance = 0
+    ring = current
+    while ring < want:
+        if ring == 0:
+            ring = 360
+        distance = distance + 1
+        ring = ring - 1
+        print('  calc_left_distance ring ' + str(ring) + ' want ' + str(want))
+    return distance
+
+
 #################
-# turn to a specific compass heading
+# THE MASTER TURN FUNCTION
+# Turns to a specific given compass heading using the best available method. Given a bearing, it also decides whether to turn left or right to maximize efficiency
 # degrees - 0 - 359
 # NOTE: gyro_sensor.angle() can be positive or negative integer
 #################
@@ -93,7 +101,7 @@ def turn(robot, gyro_sensor, desired_degrees):
     steering_speed_fast = 50
     steering_speed_slow = 10
     if gyro_sensor.angle() < 0:
-        #Set the actual current DEGREES to 360 minus whatever the gyro is at. This means that at any negative number can work in the equation.
+        # Set the actual current DEGREES to 360 minus whatever the gyro is at. This means that at any negative number can work in the equation.
         current_degrees = 360 + gyro_sensor.angle()
     else:
         current_degrees = gyro_sensor.angle()
@@ -102,7 +110,6 @@ def turn(robot, gyro_sensor, desired_degrees):
         print('  left turn distance ' + str(left_distance))
         new_gyro_value = travel_left_distance(current_gyro_value, left_distance)
         robot.drive(0, steering_speed_fast)
-        # TODO this may be backwards < or >
         while gyro_sensor.angle() > new_gyro_value:
             #print(str(gyro_sensor.angle() % 360))
             wait(1)
@@ -118,7 +125,6 @@ def turn(robot, gyro_sensor, desired_degrees):
         print('  right turn distance ' + str(right_distance))
         new_gyro_value = travel_right_distance(current_gyro_value, right_distance)
         robot.drive(0, steering_speed_fast)
-        # TODO this may be backwards < or >
         while gyro_sensor.angle() < new_gyro_value:
             wait(1)
         robot.drive(0, 0)
@@ -129,6 +135,12 @@ def turn(robot, gyro_sensor, desired_degrees):
         robot.drive(0, 0)
         print('  right turn desired ' + str(new_gyro_value) + ' actual ' + str(gyro_sensor.angle()))
 
+
+################
+# Specific turning functions
+# These functions allow for customized control over the all turning methods. These speeds are adjustable, making it useful for select functions
+# For most turns, the master turn function will suffice
+################
 def turn_right(robot, gyro_sensor, want): # Turns the robot right with adjustable speeds and angles
     rough_turn = want - 10
     steering = -45
@@ -173,7 +185,7 @@ def turn_right_slow(robot, gyro_sensor, want): # A slower, more precise way to t
     robot.drive(0, 0)
     print(str(gyro_sensor.angle()))
 
-def turn(robot, gyro_sensor, want): # An automatic function that calculates the best turn function to use for any given angle input
+def turn(robot, gyro_sensor, want): # An automatic function that calculates the best turn function of the 4 above to use for any given angle input
     gyro_sensor.reset_angle(0)
     if want > 10:
         turn_right(robot, gyro_sensor, want)
@@ -205,4 +217,11 @@ def straight(robot, gyro_sensor, distance, speed): # An accurate way to drive th
         else:
             pass
 
+
+##########
+# Main
+# In a typical program, this would be where the action actually happens. The entire code above is split into "functions," which make it very easy to call a specific function.
+# This program does not use the main section because it is designed to be imported into another program that uses any of these functions above.
+# However, it order to make sure that there are no errors in the program, I've added a Hello World line to prove that the program works properly on a defined level.
+##########
 print("Hello world!")    # If all else fails, at least say hello to the world first!
